@@ -155,6 +155,21 @@ async fn main() -> Result<()> {
             let media_content = download_playlist(media_url.as_str()).await?;
             let (_, media_pl) = parse_playlist(&media_content)
                 .map_err(|e| anyhow::anyhow!("解析 m3u8 失败: {:?}", e))?;
+
+            // 重新处理 base_url
+            let base_url = if media_url.as_str().starts_with("http") {
+                let mut url = media_url.clone();
+                url.set_query(None);
+                let mut path = url.path().to_string();
+                if let Some(pos) = path.rfind('/') {
+                    path.truncate(pos + 1);
+                }
+                url.set_path(&path);
+                Some(url)
+            } else {
+                None
+            };
+
             let media_pl = media_pl.clone();
 
             if let Playlist::MediaPlaylist(mp) = media_pl {
